@@ -18,9 +18,12 @@ O backend do Desbrava Provas é construído com **NestJS**, seguindo princípios
 - **Migrations**: Prisma Migrate
 
 ### Autenticação & Segurança
-- **JWT**: JSON Web Tokens para autenticação stateless
-- **Bcrypt**: Hash de senhas (fator 10)
-- **Guards**: NestJS Guards para proteção de rotas
+- **JWT**: JSON Web Tokens para autenticação stateless (expiração: 24h)
+- **Passport**: Middleware de autenticação com estratégia JWT
+- **Bcrypt**: Hash de senhas (10 salt rounds)
+- **Guards**: JwtAuthGuard (autenticação) + RolesGuard (autorização)
+- **Validation**: class-validator para validação de DTOs
+- ✅ **Status**: Implementado (Sessão 01)
 
 ### Integrações
 - **IA**: OpenAI API ou Anthropic Claude (para geração de questões)
