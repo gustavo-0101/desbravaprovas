@@ -1,12 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 describe('PrismaService', () => {
   let service: PrismaService;
 
+  beforeAll(() => {
+    jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PrismaService],
+      providers: [
+        PrismaService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'DATABASE_URL') {
+                return 'postgresql://test:test@localhost:5432/test';
+              }
+              return null;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<PrismaService>(PrismaService);
@@ -50,11 +75,21 @@ describe('PrismaService', () => {
       expect(disconnectSpy).toHaveBeenCalled();
     });
 
-    it('não deve lançar erro se falhar ao desconectar', async () => {
-      const error = new Error('Erro ao desconectar');
-      jest.spyOn(service, '$disconnect').mockRejectedValue(error);
+    it('deve logar erro mas não lançar se falhar ao desconectar', async () => {
+      const mockError = 'Erro de conexão';
+      const disconnectSpy = jest
+        .spyOn(service, '$disconnect')
+        .mockRejectedValue(mockError);
 
-      await expect(service.onModuleDestroy()).resolves.not.toThrow();
+      await service.onModuleDestroy();
+
+      expect(disconnectSpy).toHaveBeenCalled();
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Erro ao desconectar do banco de dados',
+        mockError,
+      );
+
+      disconnectSpy.mockRestore();
     });
   });
 
