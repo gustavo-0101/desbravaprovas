@@ -88,7 +88,6 @@ export class UsuariosController {
     @Body() dto: UpdateUsuarioDto,
     @CurrentUser() user: CurrentUserType,
   ) {
-    // Apenas MASTER pode atualizar outros usuários
     if (user.papelGlobal !== PapelGlobal.MASTER && user.id !== id) {
       throw new ForbiddenException(
         'Você só pode atualizar seus próprios dados',
@@ -109,7 +108,6 @@ export class UsuariosController {
     @Body() dto: AlterarSenhaDto,
     @CurrentUser() user: CurrentUserType,
   ) {
-    // Apenas o próprio usuário pode alterar sua senha
     if (user.id !== id) {
       throw new ForbiddenException('Você só pode alterar sua própria senha');
     }
@@ -127,7 +125,6 @@ export class UsuariosController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: CurrentUserType,
   ) {
-    // Apenas MASTER ou o próprio usuário pode deletar
     if (user.papelGlobal !== PapelGlobal.MASTER && user.id !== id) {
       throw new ForbiddenException(
         'Você só pode deletar sua própria conta',
@@ -170,7 +167,6 @@ export class UsuariosController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: CurrentUserType,
   ) {
-    // Apenas MASTER ou o próprio usuário pode atualizar foto
     if (user.papelGlobal !== PapelGlobal.MASTER && user.id !== id) {
       throw new ForbiddenException(
         'Você só pode atualizar sua própria foto',

@@ -8,13 +8,11 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-// Mock do bcrypt
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
 }));
 
-// Mock do sharp
 jest.mock('sharp', () => {
   return jest.fn(() => ({
     resize: jest.fn().mockReturnThis(),
@@ -52,7 +50,6 @@ describe('UsuariosService', () => {
     service = module.get<UsuariosService>(UsuariosService);
     prisma = module.get<PrismaService>(PrismaService);
 
-    // Limpar mocks entre testes
     jest.clearAllMocks();
   });
 
@@ -174,8 +171,8 @@ describe('UsuariosService', () => {
 
     it('deve atualizar email e marcar como não verificado', async () => {
       mockPrismaService.usuario.findUnique
-        .mockResolvedValueOnce(mockUsuario) // buscarPorId
-        .mockResolvedValueOnce(null); // verificar se email existe
+        .mockResolvedValueOnce(mockUsuario)
+        .mockResolvedValueOnce(null);
 
       mockPrismaService.usuario.update.mockResolvedValue({
         ...mockUsuario,
@@ -190,8 +187,8 @@ describe('UsuariosService', () => {
 
     it('deve lançar ConflictException se email já estiver em uso', async () => {
       mockPrismaService.usuario.findUnique
-        .mockResolvedValueOnce(mockUsuario) // buscarPorId
-        .mockResolvedValueOnce({ id: 2, email: 'outro@test.com' }); // email existe
+        .mockResolvedValueOnce(mockUsuario)
+        .mockResolvedValueOnce({ id: 2, email: 'outro@test.com' });
 
       await expect(
         service.atualizar(1, { email: 'outro@test.com' }),
@@ -240,7 +237,7 @@ describe('UsuariosService', () => {
     it('deve lançar UnauthorizedException se usuário usar login Google', async () => {
       mockPrismaService.usuario.findUnique.mockResolvedValue({
         id: 1,
-        senhaHash: null, // Login Google
+        senhaHash: null,
       });
 
       await expect(

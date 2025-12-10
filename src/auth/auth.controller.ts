@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService, AuthResponse } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -24,28 +25,13 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { CurrentUserType } from './decorators/current-user.decorator';
 
-/**
- * Controller de Autenticação
- *
- * Gerencia endpoints de login, registro e perfil do usuário.
- *
- * @class AuthController
- */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /**
-   * Login de usuário
-   *
-   * Endpoint público para autenticação.
-   * Retorna token JWT válido por 24h.
-   *
-   * @param {LoginDto} loginDto - Credenciais de login
-   * @returns {Promise<AuthResponse>} Token e dados do usuário
-   */
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -77,16 +63,8 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  /**
-   * Registro de novo usuário
-   *
-   * Endpoint público para criar conta.
-   * Usuário criado com papel USUARIO por padrão.
-   *
-   * @param {RegistroDto} registroDto - Dados de registro
-   * @returns {Promise<AuthResponse>} Token e dados do usuário
-   */
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('registro')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -122,15 +100,6 @@ export class AuthController {
     return this.authService.registro(registroDto);
   }
 
-  /**
-   * Ver perfil do usuário autenticado
-   *
-   * Endpoint protegido para obter dados do usuário logado.
-   * Requer token JWT no header Authorization.
-   *
-   * @param {CurrentUserType} user - Usuário extraído do token
-   * @returns {CurrentUserType} Dados do usuário
-   */
   @Get('perfil')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -160,11 +129,6 @@ export class AuthController {
     return user;
   }
 
-  /**
-   * Iniciar login com Google
-   *
-   * Redireciona usuário para tela de autenticação do Google.
-   */
   @Public()
   @Get('google')
   @UseGuards(GoogleAuthGuard)
@@ -177,16 +141,8 @@ export class AuthController {
     description: 'Redireciona para tela de login do Google',
   })
   async googleLogin() {
-    // Guard redireciona automaticamente para Google
   }
 
-  /**
-   * Callback do Google OAuth2
-   *
-   * Recebe dados do usuário após autenticação com Google.
-   * Cria usuário se não existir (findOrCreate pattern).
-   * Retorna token JWT.
-   */
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)

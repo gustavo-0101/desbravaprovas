@@ -3,9 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
-/**
- * Perfil do usuário retornado pelo Google
- */
 export interface GoogleProfile {
   id: string;
   displayName: string;
@@ -13,15 +10,6 @@ export interface GoogleProfile {
   photos: Array<{ value: string }>;
 }
 
-/**
- * Strategy de autenticação Google OAuth2
- *
- * Permite login com conta Google.
- * Cria usuário automaticamente se não existir (findOrCreate pattern).
- *
- * @class GoogleStrategy
- * @extends {PassportStrategy}
- */
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private configService: ConfigService) {
@@ -33,17 +21,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  /**
-   * Validação do perfil do Google
-   *
-   * Executado após autenticação bem-sucedida com Google.
-   * Retorna dados do usuário que serão processados no AuthService.
-   *
-   * @param {string} accessToken - Token de acesso do Google
-   * @param {string} refreshToken - Token de refresh do Google
-   * @param {GoogleProfile} profile - Perfil do usuário no Google
-   * @param {VerifyCallback} done - Callback do Passport
-   */
   async validate(
     accessToken: string,
     refreshToken: string,

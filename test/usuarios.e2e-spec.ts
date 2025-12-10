@@ -313,11 +313,11 @@ describe('Usuarios (e2e)', () => {
         .set('Authorization', `Bearer ${flowToken}`)
         .expect(200);
 
-      // 6. Verificar que foi deletado
+      // 6. Verificar que foi deletado (token inválido pois usuário foi deletado)
       await request(app.getHttpServer())
         .get(`/usuarios/${flowUserId}`)
         .set('Authorization', `Bearer ${flowToken}`)
-        .expect(404);
+        .expect(401); // Token inválido após delete
     });
   });
 });

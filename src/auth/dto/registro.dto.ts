@@ -7,21 +7,6 @@ import {
   MaxLength,
 } from 'class-validator';
 
-/**
- * DTO para registro de novo usuário
- *
- * Valida dados de cadastro de novos usuários.
- * Após registro, usuário terá papel USUARIO por padrão.
- *
- * @class RegistroDto
- *
- * @example
- * {
- *   "nome": "João Silva",
- *   "email": "joao.silva@exemplo.com",
- *   "senha": "senha123"
- * }
- */
 export class RegistroDto {
   @ApiProperty({
     description: 'Nome completo do usuário',

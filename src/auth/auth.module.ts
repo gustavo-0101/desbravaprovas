@@ -8,14 +8,6 @@ import { JwtStrategy, GoogleStrategy } from './strategies';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
-/**
- * Módulo de Autenticação
- *
- * Configura JWT, Passport e expõe serviços de autenticação.
- * Exporta guards e strategies para uso em outros módulos.
- *
- * @module AuthModule
- */
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),

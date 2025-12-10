@@ -6,7 +6,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegistroDto } from './dto/registro.dto';
 
-// Mock do bcrypt
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
@@ -75,15 +74,12 @@ describe('AuthService', () => {
     };
 
     it('deve fazer login com sucesso', async () => {
-      // Arrange
       mockPrismaService.usuario.findUnique.mockResolvedValue(usuarioMock);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockJwtService.sign.mockReturnValue('fake-jwt-token');
 
-      // Act
       const result = await service.login(loginDto);
 
-      // Assert
       expect(result).toEqual({
         access_token: 'fake-jwt-token',
         usuario: {
@@ -109,10 +105,8 @@ describe('AuthService', () => {
     });
 
     it('deve lançar UnauthorizedException se email não existir', async () => {
-      // Arrange
       mockPrismaService.usuario.findUnique.mockResolvedValue(null);
 
-      // Act & Assert
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
       );
@@ -122,11 +116,9 @@ describe('AuthService', () => {
     });
 
     it('deve lançar UnauthorizedException se senha incorreta', async () => {
-      // Arrange
       mockPrismaService.usuario.findUnique.mockResolvedValue(usuarioMock);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      // Act & Assert
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
       );
@@ -155,16 +147,13 @@ describe('AuthService', () => {
     };
 
     it('deve registrar novo usuário com sucesso', async () => {
-      // Arrange
-      mockPrismaService.usuario.findUnique.mockResolvedValue(null); // Email não existe
+      mockPrismaService.usuario.findUnique.mockResolvedValue(null);
       mockPrismaService.usuario.create.mockResolvedValue(usuarioCriado);
       (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$10$hashedpassword');
       mockJwtService.sign.mockReturnValue('fake-jwt-token');
 
-      // Act
       const result = await service.registro(registroDto);
 
-      // Assert
       expect(result).toEqual({
         access_token: 'fake-jwt-token',
         usuario: {
@@ -195,14 +184,12 @@ describe('AuthService', () => {
     });
 
     it('deve lançar ConflictException se email já existir', async () => {
-      // Arrange
       const usuarioExistente = {
         id: 1,
         email: 'newuser@example.com',
       };
       mockPrismaService.usuario.findUnique.mockResolvedValue(usuarioExistente);
 
-      // Act & Assert
       await expect(service.registro(registroDto)).rejects.toThrow(
         ConflictException,
       );
@@ -215,7 +202,6 @@ describe('AuthService', () => {
 
   describe('verifyToken', () => {
     it('deve verificar token válido', async () => {
-      // Arrange
       const token = 'valid-jwt-token';
       const payload = {
         sub: 1,
@@ -224,22 +210,18 @@ describe('AuthService', () => {
       };
       mockJwtService.verify.mockReturnValue(payload);
 
-      // Act
       const result = await service.verifyToken(token);
 
-      // Assert
       expect(result).toEqual(payload);
       expect(jwtService.verify).toHaveBeenCalledWith(token);
     });
 
     it('deve lançar UnauthorizedException para token inválido', async () => {
-      // Arrange
       const token = 'invalid-jwt-token';
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
-      // Act & Assert
       await expect(service.verifyToken(token)).rejects.toThrow(
         UnauthorizedException,
       );

@@ -46,16 +46,8 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  afterEach(async () => {
-    // Limpar usuários de teste após cada teste
-    await prisma.usuario.deleteMany({
-      where: {
-        email: {
-          contains: '@test.com',
-        },
-      },
-    });
-  });
+  // REMOVIDO: afterEach que deletava usuários estava interferindo com outros test suites
+  // Cada test suite limpa o banco no seu próprio beforeAll
 
   /**
    * Helper: Limpar dados de teste
