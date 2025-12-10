@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +11,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegistroDto } from './dto/registro.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './strategies/jwt.strategy';
+import { EmailService } from '../email/email.service';
+import { randomBytes } from 'crypto';
 
 export interface AuthResponse {
   access_token: string;
@@ -30,6 +33,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
@@ -85,6 +89,7 @@ export class AuthService {
     }
 
     const senhaHash = await this.hashPassword(senha);
+    const tokenVerificacao = this.gerarTokenVerificacao();
 
     const usuario = await this.prisma.usuario.create({
       data: {
@@ -92,8 +97,16 @@ export class AuthService {
         email,
         senhaHash,
         papelGlobal: 'USUARIO',
+        tokenVerificacao,
+        emailVerificado: false,
       },
     });
+
+    await this.emailService.enviarEmailVerificacao(
+      usuario.email,
+      usuario.nome,
+      tokenVerificacao,
+    );
 
     const token = this.generateToken(usuario.id, usuario.email, usuario.papelGlobal);
 
@@ -192,5 +205,147 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Token inválido ou expirado');
     }
+  }
+
+  async verificarEmail(token: string): Promise<{ message: string }> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { tokenVerificacao: token },
+    });
+
+    if (!usuario) {
+      throw new BadRequestException('Token de verificação inválido');
+    }
+
+    if (usuario.emailVerificado) {
+      throw new BadRequestException('Email já verificado');
+    }
+
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        emailVerificado: true,
+        tokenVerificacao: null,
+      },
+    });
+
+    await this.emailService.enviarEmailBoasVindas(usuario.email, usuario.nome);
+
+    this.logger.log(`Email verificado: ${usuario.email}`);
+
+    return { message: 'Email verificado com sucesso!' };
+  }
+
+  async reenviarVerificacao(email: string): Promise<{ message: string }> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    if (!usuario) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (usuario.emailVerificado) {
+      throw new BadRequestException('Email já verificado');
+    }
+
+    if (!usuario.senhaHash) {
+      throw new BadRequestException(
+        'Usuários que fazem login com Google não precisam verificar email',
+      );
+    }
+
+    const tokenVerificacao = this.gerarTokenVerificacao();
+
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { tokenVerificacao },
+    });
+
+    await this.emailService.enviarEmailVerificacao(
+      usuario.email,
+      usuario.nome,
+      tokenVerificacao,
+    );
+
+    this.logger.log(`Email de verificação reenviado para: ${email}`);
+
+    return { message: 'Email de verificação reenviado com sucesso!' };
+  }
+
+  private gerarTokenVerificacao(): string {
+    return randomBytes(32).toString('hex');
+  }
+
+  async solicitarRecuperacaoSenha(email: string): Promise<{ message: string }> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    if (!usuario) {
+      return { message: 'Se o email existir, um link de recuperação será enviado.' };
+    }
+
+    if (!usuario.senhaHash) {
+      throw new BadRequestException(
+        'Usuários que fazem login com Google não podem recuperar senha',
+      );
+    }
+
+    const tokenRecuperacaoSenha = randomBytes(32).toString('hex');
+    const tokenRecuperacaoExpira = new Date();
+    tokenRecuperacaoExpira.setHours(tokenRecuperacaoExpira.getHours() + 1);
+
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        tokenRecuperacaoSenha,
+        tokenRecuperacaoExpira,
+      },
+    });
+
+    await this.emailService.enviarEmailRecuperacaoSenha(
+      usuario.email,
+      usuario.nome,
+      tokenRecuperacaoSenha,
+    );
+
+    this.logger.log(`Email de recuperação de senha enviado para: ${email}`);
+
+    return { message: 'Se o email existir, um link de recuperação será enviado.' };
+  }
+
+  async redefinirSenha(
+    token: string,
+    novaSenha: string,
+  ): Promise<{ message: string }> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { tokenRecuperacaoSenha: token },
+    });
+
+    if (!usuario) {
+      throw new BadRequestException('Token de recuperação inválido');
+    }
+
+    if (
+      !usuario.tokenRecuperacaoExpira ||
+      usuario.tokenRecuperacaoExpira < new Date()
+    ) {
+      throw new BadRequestException('Token de recuperação expirado');
+    }
+
+    const senhaHash = await this.hashPassword(novaSenha);
+
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        senhaHash,
+        tokenRecuperacaoSenha: null,
+        tokenRecuperacaoExpira: null,
+      },
+    });
+
+    this.logger.log(`Senha redefinida com sucesso para: ${usuario.email}`);
+
+    return { message: 'Senha redefinida com sucesso!' };
   }
 }

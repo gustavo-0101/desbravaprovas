@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy, GoogleStrategy } from './strategies';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RolesGuard } from './guards/roles.guard';
         },
       }),
     }),
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [

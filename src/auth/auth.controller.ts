@@ -7,18 +7,22 @@ import {
   Get,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService, AuthResponse } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegistroDto } from './dto/registro.dto';
+import { SolicitarRecuperacaoDto } from './dto/solicitar-recuperacao.dto';
+import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -127,6 +131,117 @@ export class AuthController {
   })
   async verPerfil(@CurrentUser() user: CurrentUserType): Promise<CurrentUserType> {
     return user;
+  }
+
+  @Public()
+  @Get('verificar-email')
+  @ApiOperation({
+    summary: 'Verificar email do usuário',
+    description:
+      'Verifica o email do usuário usando o token enviado por email. Envia email de boas-vindas após verificação.',
+  })
+  @ApiQuery({
+    name: 'token',
+    description: 'Token de verificação enviado por email',
+    example: 'a1b2c3d4e5f6...',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verificado com sucesso',
+    schema: {
+      example: {
+        message: 'Email verificado com sucesso!',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Token inválido ou email já verificado',
+  })
+  async verificarEmail(
+    @Query('token') token: string,
+  ): Promise<{ message: string }> {
+    return this.authService.verificarEmail(token);
+  }
+
+  @Public()
+  @Post('reenviar-verificacao')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reenviar email de verificação',
+    description: 'Reenvia o email de verificação para o email fornecido',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email de verificação reenviado',
+    schema: {
+      example: {
+        message: 'Email de verificação reenviado com sucesso!',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email já verificado ou usuário não encontrado',
+  })
+  async reenviarVerificacao(
+    @Body('email') email: string,
+  ): Promise<{ message: string }> {
+    return this.authService.reenviarVerificacao(email);
+  }
+
+  @Public()
+  @Post('solicitar-recuperacao-senha')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Solicitar recuperação de senha',
+    description:
+      'Envia email com link para redefinir senha. Token válido por 1 hora.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email de recuperação enviado (se o email existir)',
+    schema: {
+      example: {
+        message: 'Se o email existir, um link de recuperação será enviado.',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Usuário usa login com Google',
+  })
+  async solicitarRecuperacaoSenha(
+    @Body() dto: SolicitarRecuperacaoDto,
+  ): Promise<{ message: string }> {
+    return this.authService.solicitarRecuperacaoSenha(dto.email);
+  }
+
+  @Public()
+  @Post('redefinir-senha')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Redefinir senha com token',
+    description:
+      'Redefine a senha do usuário usando o token recebido por email',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Senha redefinida com sucesso',
+    schema: {
+      example: {
+        message: 'Senha redefinida com sucesso!',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Token inválido ou expirado',
+  })
+  async redefinirSenha(
+    @Body() dto: RedefinirSenhaDto,
+  ): Promise<{ message: string }> {
+    return this.authService.redefinirSenha(dto.token, dto.novaSenha);
   }
 
   @Public()

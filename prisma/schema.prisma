@@ -31,6 +31,10 @@ model Usuario {
   emailVerificado   Boolean          @default(false)
   tokenVerificacao  String?          @unique
 
+  // Recuperação de senha
+  tokenRecuperacaoSenha  String?     @unique
+  tokenRecuperacaoExpira DateTime?
+
   // OAuth Google
   googleId          String?          @unique
 
