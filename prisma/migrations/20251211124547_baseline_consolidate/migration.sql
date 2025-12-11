@@ -1,0 +1,22 @@
+-- Migration de Baseline (Consolidação)
+-- Esta migration documenta o estado atual do banco de dados.
+-- O banco já foi atualizado via `prisma db push` durante o desenvolvimento.
+--
+-- Mudanças consolidadas desde as migrations iniciais:
+--
+-- 1. Adição de autenticação OAuth (googleId no Usuario)
+-- 2. Adição de verificação de email (emailVerificado, tokenVerificacao)
+-- 3. Adição de recuperação de senha (tokenRecuperacaoSenha, tokenRecuperacaoExpira)
+-- 4. Adição de controle de clube criado (clubeCriadoId)
+-- 5. Remoção do modelo Especialidade
+-- 6. Adição do enum CategoriaEspecialidade
+-- 7. Adição do role INSTRUTOR ao PapelClube
+-- 8. Adição do tipo PRATICA ao TipoQuestao
+-- 9. Mudança nos valores do enum VisibilidadeProva
+-- 10. Adição de campos de localização no Clube (cidade, estado, pais, lat/long)
+-- 11. Adição de campos no MembroClube (dataNascimento, batizado, cargoEspecifico)
+-- 12. Refatoração do modelo Prova (criadorId, autorOriginalId, categoria, etc)
+-- 13. Refatoração do modelo Questao (ordem, pontuacao, opcoes)
+--
+-- Como o banco já está atualizado, esta migration não executa nenhum SQL.
+-- Ela serve apenas como documentação e ponto de baseline para futuras migrations.

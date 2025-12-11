@@ -54,8 +54,30 @@ npm install
 Crie um arquivo .env com:
 
 ```
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/desbravaprovas?schema=public"
-JWT_SECRET="chave_super_secreta"
+DATABASE_URL="postgresql://NOMEDOBANCO:SENHADOBANCO123@localhost:5432/NOMEDOBANCO?schema=public&client_encoding=UTF8"
+
+# JWT Configuration
+JWT_SECRET="chave-secreta"
+JWT_EXPIRES_IN="24h"
+
+# Google OAuth2 Configuration
+# Obter credenciais em: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_ID="id_google"
+GOOGLE_CLIENT_SECRET="secret_google"
+GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
+
+# Email Configuration (NodeMailer)
+# Para Gmail: use App Password (https://support.google.com/accounts/answer/185833)
+# Para dev recomendamos o uso de Ethereal para testes.
+
+MAIL_HOST="smtp.ethereal.email"
+MAIL_PORT=587
+MAIL_USER="gerar_com_ethereal"
+MAIL_PASS="gerar_com_ethereal"
+MAIL_FROM="noreply@desbravaprovas.com (ou como quiser chamar)"
+
+# Application URL
+APP_URL="http://localhost:3000"
 ```
 
 ### 3. Rodar migrations
@@ -110,7 +132,6 @@ Você é livre para:
 
 desde que:
 
-- **não seja para fins comerciais**, e
-- **seja atribuída a autoria original**.
+- **não seja para fins comerciais**.
 
 Veja o arquivo LICENSE para mais informações.
