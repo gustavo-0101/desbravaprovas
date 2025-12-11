@@ -15,6 +15,8 @@ import { UpdateProvaDto } from './dto/update-prova.dto';
 import { CreateQuestaoDto } from './dto/create-questao.dto';
 import { UpdateQuestaoDto } from './dto/update-questao.dto';
 import { ReordenarQuestoesDto } from './dto/reordenar-questoes.dto';
+import { GenerateQuestionsIADto } from './dto/generate-questions-ia.dto';
+import { QuestionsGeneratorService } from './ia/questions-generator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -29,7 +31,10 @@ import {
 @ApiTags('Provas')
 @Controller('provas')
 export class ProvasController {
-  constructor(private readonly provasService: ProvasService) {}
+  constructor(
+    private readonly provasService: ProvasService,
+    private readonly questionsGeneratorService: QuestionsGeneratorService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -164,6 +169,55 @@ export class ProvasController {
     @GetUser('sub') usuarioId: number,
   ) {
     return this.provasService.adicionarQuestao(usuarioId, provaId, createQuestaoDto);
+  }
+
+  @Post(':id/gerar-questoes-ia')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Gerar questões automaticamente por IA (Rate limit: 3/min)',
+    description:
+      'Gera questões automaticamente usando IA (OpenAI GPT-4). A IA cria questões variadas (múltipla escolha, dissertativas, práticas) baseadas na especialidade. Valida URL do MDA Wiki se fornecida. Requer OPENAI_API_KEY configurada.',
+  })
+  @ApiParam({ name: 'id', description: 'ID da prova' })
+  @ApiResponse({
+    status: 201,
+    description: 'Questões geradas e adicionadas com sucesso',
+    schema: {
+      example: {
+        questoesCriadas: 10,
+        urlValidada: true,
+        message: '10 questões geradas com sucesso para Primeiros Socorros',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos ou serviço de IA não configurado',
+  })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  @ApiResponse({ status: 404, description: 'Prova não encontrada' })
+  async gerarQuestoesIA(
+    @Param('id', ParseIntPipe) provaId: number,
+    @Body() dto: GenerateQuestionsIADto,
+    @GetUser('sub') usuarioId: number,
+  ) {
+    const prova = await this.provasService.findOne(usuarioId, provaId);
+
+    const result = await this.questionsGeneratorService.gerarESalvarQuestoes(
+      provaId,
+      usuarioId,
+      dto.especialidade,
+      prova.categoria,
+      dto.numeroQuestoes,
+      dto.urlReferenciaMDA,
+    );
+
+    return {
+      ...result,
+      message: `${result.questoesCriadas} questões geradas com sucesso para ${dto.especialidade}`,
+    };
   }
 
   @Patch(':provaId/questoes/:questaoId')

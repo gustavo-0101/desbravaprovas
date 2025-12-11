@@ -13,6 +13,7 @@ import { ClubesModule } from './clubes/clubes.module';
 import { UnidadesModule } from './unidades/unidades.module';
 import { MembrosModule } from './membros/membros.module';
 import { ProvasModule } from './provas/provas.module';
+import { AIModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ProvasModule } from './provas/provas.module';
     UnidadesModule,
     MembrosModule,
     ProvasModule,
+    AIModule,
   ],
   controllers: [AppController],
   providers: [

@@ -78,6 +78,27 @@ MAIL_FROM="noreply@desbravaprovas.com (ou como quiser chamar)"
 
 # Application URL
 APP_URL="http://localhost:3000"
+
+
+# ============================================
+# IA Configuration (Geração de Questões)
+# ============================================
+# Escolha qual provider usar (opcional):
+# - "gemini" = Google Gemini (1500 req/dia grátis)
+# - "groq" = Groq (14.400 req/dia grátis, MUITO RÁPIDO)
+# Se não especificar, auto-detecta (prioriza Groq se disponível)
+AI_PROVIDER="groq"
+
+# Google Gemini API Key
+# ✅ GRATUITO: 1500 requisições/dia
+# Obter chave em: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY="gmini_api_key"
+
+# Groq API Key
+# ✅ GRATUITO: 14.400 requisições/dia (10x mais que Gemini)
+# ✅ MUITO RÁPIDO: ~10x mais rápido que OpenAI
+# Obter chave em: https://console.groq.com/keys
+GROQ_API_KEY="grok_key"
 ```
 
 ### 3. Rodar migrations
